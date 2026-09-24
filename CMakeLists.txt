@@ -13,3 +13,9 @@ add_executable(lab_1_bonus
         lab_1_bonus/findDecision.h
         lab_1_bonus/main.cpp
 )
+
+add_executable(lab_2
+        lab_2/CrazyPyatnashki.cpp
+        lab_2/CrazyPyatnashki.h
+        lab_2/main.cpp
+)
