@@ -1,27 +1,23 @@
-#ifndef IS_LABS_CRAZYPYATNASHKI_H
-#define IS_LABS_CRAZYPYATNASHKI_H
-
-#include <iostream>
+// CrazyPyatnashki.h
+#pragma once          // или #ifndef-гард
 #include <string>
 #include <vector>
-#include <unordered_set>
-#include <queue>
-#include <unordered_map>
-#include <cmath>
-#include <stdexcept>
-#include <algorithm>
-#include <cstdlib>
+#include <cstdint>
 
-const std::string TARGET = "123456789ABCDEF0";
+using u64 = uint64_t;
 
-bool isSolvable(const std::string& input);
-int countOfInversions(const std::string& input, char blank);
-std::string generateSequence(int width, int steps);
-std::vector<std::string> getNeighbours(const std::string& input);
-int bfs(const std::string& input);
-int dfs(const std::string& input);
-int helpDfs(const std::string& current, int depth, std::unordered_set<std::string>& visited);
-int ids(const std::string& input);
-bool helpIds(const std::string& current, int depth, int limit, std::unordered_set<std::string>& visited);
+constexpr int BOARD_SIZE  = 16;
+constexpr int BOARD_WIDTH = 4;
+constexpr uint64_t TARGET = 0x123456789ABCDEF0ULL;
 
-#endif //IS_LABS_CRAZYPYATNASHKI_H
+u64  parseState(const std::string& input);
+int  getNibble(u64 state, int pos);
+u64  setNibble(u64 state, int pos, int value);
+int  findBlankPosition(u64 state);
+u64  shiftBlankPosition(u64 state, int blankPosition, int newBlankPosition);
+bool isSolvable(u64 state);
+std::vector<u64> getNeighbours(u64 state);
+
+extern int  newBlankTable[BOARD_SIZE][4];
+extern bool isMovesInit;
+void initializeMoves();

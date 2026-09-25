@@ -1,217 +1,129 @@
 #include "CrazyPyatnashki.h"
 
-int countOfInversions(const std::string& input, char blank = '0')
+void initializeMoves()
 {
-    std::vector<int> values;
+    for (int i = 0; i < BOARD_WIDTH; i++)
+    {
+        for (int j = 0; j < BOARD_WIDTH; j++)
+        {
+            int pos = i * BOARD_WIDTH + j;
+            newBlankTable[pos][0] = (i > 0) ? pos - BOARD_WIDTH : -1;
+            newBlankTable[pos][1] = (i < BOARD_WIDTH - 1) ? pos + BOARD_WIDTH : -1;
+            newBlankTable[pos][2] = (j > 0) ? pos - 1 : -1;
+            newBlankTable[pos][3] = (j < BOARD_WIDTH - 1) ? pos + 1 : -1;
+        }
+    }
+    isMovesInit = true;
+}
 
+int getNibble(u64 state, int pos) {
+    return (state >> (4 * (15 - pos))) & 0xF;
+}
+
+u64 setNibble(u64 state, int pos, int value)
+{
+    int shift = 4 * (15 - pos);
+    auto mask = 0xFULL << shift;
+    return (state & ~mask) | (u64(value) << shift);
+}
+
+int findBlankPosition(u64 state)
+{
+    for (int i = 0; i < BOARD_SIZE; i++)
+        if (getNibble(state, i) == 0) return i;
+    return -1;
+}
+
+// Двигаем нолик на новую позицию
+u64 shiftBlankPosition(u64 state, int blankPosition, int newBlankPosition)
+{
+    int tile = getNibble(state, newBlankPosition);
+    state = setNibble(state, blankPosition, tile);
+    state = setNibble(state, newBlankPosition, 0);
+    return state;
+}
+
+u64 parseState(const std::string& input)
+{
+    if (static_cast<int>(input.size()) != BOARD_SIZE)
+        throw std::runtime_error("Wrong state size, not equal " + BOARD_SIZE);
+
+    u64 state = 0;
     for (char c : input)
     {
-        if (c == blank) continue;
-        if ('0' <= c && c <= '9')       values.push_back(c - '0');
-        else if ('A' <= c && c <= 'Z')  values.push_back(c - 'A' + 10);
-        else throw std::invalid_argument("invalid character");
-    }
-
-    int count = 0;
-    for (std::size_t i = 0; i < values.size(); ++i)
-        for (std::size_t j = i + 1; j < values.size(); ++j)
-            if (values[i] > values[j])
-                ++count;
-
-    return count;
-}
-
-bool isSolvable(const std::string& input)
-{
-    const int n = static_cast<int>(input.size());
-    const int width  = static_cast<int>(std::sqrt(n));
-    const int height = n / width;
-
-    const int inversions = countOfInversions(input);
-
-    const int blankPos    = static_cast<int>(input.find('0'));
-    const int rowTop0     = blankPos / width;
-    const int rowBottom1  = height - rowTop0;
-
-    if (width % 2 == 1)
-        return inversions % 2 == 0;
-
-    return (inversions + rowBottom1) % 2 == 1;
-}
-
-std::string generateSequence(int width, int steps)
-{
-    std::string state = TARGET;
-
-    int previousZeroPos = -1;
-
-    for (int i = 0; i < steps; ++i)
-    {
-        const int zeroPos = static_cast<int>(state.find('0'));
-
-        const int row = zeroPos / width;
-        const int col = zeroPos % width;
-
-        std::vector<int> possibleMoves;
-        if (row > 0)
-            possibleMoves.push_back(zeroPos - width);
-
-        if (row < width - 1)
-            possibleMoves.push_back(zeroPos + width);
-
-        if (col > 0)
-            possibleMoves.push_back(zeroPos - 1);
-
-        if (col < width - 1)
-            possibleMoves.push_back(zeroPos + 1);
-
-        // Не идём сразу обратно
-        if (possibleMoves.size() > 1)
-        {
-            possibleMoves.erase(
-                std::remove(
-                    possibleMoves.begin(),
-                    possibleMoves.end(),
-                    previousZeroPos
-                ),
-                possibleMoves.end()
-            );
-        }
-
-        int newZeroPos = possibleMoves[rand() % possibleMoves.size()];
-
-        previousZeroPos = zeroPos;
-
-        std::swap(state[zeroPos], state[newZeroPos]);
+        int value;
+        if ('0' <= c && c <= '9') value = c - '0';
+        else if ('A' <= c && c <= 'F') value = c - 'A' + 10;
+        else throw std::runtime_error("invalid character " + c);
+        state = (state << 4) | (static_cast<u64>(value));
     }
 
     return state;
 }
 
-// Найдем все состаяния, куда 0 может перейти за один ход
-std::vector<std::string> getNeighbours(const std::string& input)
+inline std::string stateToString(uint64_t state)
 {
-    std::vector<std::string> neighbours;
-    int width  = static_cast<int>(std::sqrt(input.size()));
-
-    const int zeroPos = static_cast<int>(input.find('0'));
-
-    const int row = zeroPos / width;
-    const int col = zeroPos % width;
-
-    auto addMove = [&](int newRow, int newCol)
-    {
-        if (newRow < 0 || newRow >= width || newCol < 0 || newCol >= width)
-            return;
-        const int newPos = newRow * width + newCol;
-
-        auto next = input;
-        std::swap(next[zeroPos], next[newPos]);
-
-        neighbours.push_back(next);
-    };
-
-    addMove(row - 1, col); addMove(row + 1, col); addMove(row, col - 1); addMove(row, col + 1);
-    return neighbours;
+    std::string result;
+    result.reserve(BOARD_SIZE);
+    for (int pos = 0; pos < BOARD_SIZE; ++pos) {
+        const int value = getNibble(state, pos);
+        result += (value < 10) ? static_cast<char>('0' + value)
+                      : static_cast<char>('A' + value - 10);
+    }
+    return result;
 }
 
-
-// Решения с помощью различных алгоритмов
-// BFS
-int bfs(const std::string& input)
+// Проверка на разрешимость заданной последовательности
+inline int countOfInversions(uint64_t state)
 {
-    if (!isSolvable(input)) throw std::invalid_argument("not solvable: " + input);
-
-    std::queue<std::string> queue;
-    std::unordered_map<std::string, int> distance;
-
-    queue.push(input);
-    distance[input] = 0;
-
-    while (!queue.empty())
+    std::vector<int> values;
+    values.reserve(BOARD_SIZE - 1);
+    for (int pos = 0; pos < BOARD_SIZE; ++pos)
     {
-        std::string current = queue.front();
-        queue.pop();
+        const int value = getNibble(state, pos);
+        if (value == 0) continue;
+        values.push_back(value);
+    }
 
-        if (current == TARGET)
-            return distance[current];
-
-        for (const std::string& neighbour : getNeighbours(current))
+    int count = 0;
+    for (int i = 0; i < values.size(); ++i)
+    {
+        for (int j = i + 1; j < values.size(); ++j)
         {
-            if (distance.contains(neighbour))
-                continue;
-
-            distance[neighbour] = distance[current] + 1;
-            queue.push(neighbour);
+            if (values[i] > values[j]) ++count;
         }
     }
 
-    return -1;
+    return count;
 }
 
-//DFS
-int dfs(const std::string& input)
+inline bool isSolvable(u64 state)
 {
-    if (!isSolvable(input))
-        throw std::invalid_argument("not solvable: " + input);
+    const int inversions = countOfInversions(state);
+    const int blankPos = findBlankPosition(state);
+    const int rowTop0 = blankPos / BOARD_WIDTH;
+    const int rowBottom1 = BOARD_WIDTH - rowTop0;
 
-    std::unordered_set<std::string> visited;
-
-    return helpDfs(input, 0, visited);
+    return (inversions + rowBottom1) % 2 == 1;
 }
 
-int helpDfs(const std::string& current, int depth, std::unordered_set<std::string>& visited)
+std::vector<u64> getNeighbours(u64 state)
 {
-    if (current == TARGET)
-        return depth;
+    if (!isMovesInit) initializeMoves();
+    std::vector<u64> neighbours;
+    neighbours.reserve(BOARD_WIDTH);
 
-    visited.insert(current);
-
-    for (const std::string& neighbour : getNeighbours(current))
+    const int blankPos = findBlankPosition(state);
+    for (int i = 0; i < BOARD_WIDTH; ++i)
     {
-        if (visited.contains(neighbour))
-            continue;
-
-        int result = helpDfs(neighbour, depth + 1, visited);
-
-        if (result != -1)
-            return result;
+        int neighbour = newBlankTable[blankPos][i];
+        if (neighbour < 0) continue;
+        neighbours.push_back(neighbour);
     }
 
-    visited.erase(current);
-
-    return -1;
+    return neighbours;
 }
 
-// IDS
-int ids(const std::string& input)
-{
-    if (!isSolvable(input)) throw std::invalid_argument("not solvable: " + input);
-
-    for (int limit = 0; ; ++limit)
-    {
-        std::unordered_set<std::string> visited;
-        if (helpIds(input, 0, limit, visited)) return limit;
-    }
-}
-
-bool helpIds(const std::string& current, int depth, int limit, std::unordered_set<std::string>& visited)
-{
-    if (current == TARGET) return true;
-    if (depth == limit) return false;
-
-    visited.insert(current);
-
-    for (const std::string& neighbour : getNeighbours(current))
-    {
-        if (visited.contains(neighbour)) continue;
-        if (helpIds(neighbour, depth + 1, limit, visited)) return true;
-    }
-
-    visited.erase(current);
-    return false;
-}
-
-
+// Рассмотрим шизоалгоритмы решения сей задачи
 
 
