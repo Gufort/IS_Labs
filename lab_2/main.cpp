@@ -46,5 +46,17 @@ int main()
                   << " | time: " << elapsedMs << " ms" << std::endl;
     }
 
+    // std::cout << '\n' << "==> IDS " << std::endl;
+    // for (int i = 0; i < 10; ++i)
+    // {
+    //     auto start = std::chrono::steady_clock::now();
+    //     int steps = ids(generatedStrings[i]);
+    //     auto end = std::chrono::steady_clock::now();
+    //     auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    //     std::cout << "Sequence " << i + 1 << ": " << generatedStrings[i]
+    //               << " | solution found in " << steps << " steps"
+    //               << " | time: " << elapsedMs << " ms" << std::endl;
+    // }
+
     return 0;
 }

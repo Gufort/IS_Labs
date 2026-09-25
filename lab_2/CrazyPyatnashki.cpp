@@ -149,19 +149,53 @@ int bfs(const std::string& input)
     return -1;
 }
 
-// DFS
+//DFS
 int dfs(const std::string& input)
+{
+    if (!isSolvable(input))
+        throw std::invalid_argument("not solvable: " + input);
+
+    std::unordered_set<std::string> visited;
+
+    return helpDfs(input, 0, visited);
+}
+
+int helpDfs(const std::string& current, int depth, std::unordered_set<std::string>& visited)
+{
+    if (current == TARGET)
+        return depth;
+
+    visited.insert(current);
+
+    for (const std::string& neighbour : getNeighbours(current))
+    {
+        if (visited.contains(neighbour))
+            continue;
+
+        int result = helpDfs(neighbour, depth + 1, visited);
+
+        if (result != -1)
+            return result;
+    }
+
+    visited.erase(current);
+
+    return -1;
+}
+
+// IDS
+int ids(const std::string& input)
 {
     if (!isSolvable(input)) throw std::invalid_argument("not solvable: " + input);
 
     for (int limit = 0; ; ++limit)
     {
         std::unordered_set<std::string> visited;
-        if (helpDfs(input, 0, limit, visited)) return limit;
+        if (helpIds(input, 0, limit, visited)) return limit;
     }
 }
 
-bool helpDfs(const std::string& current, int depth, int limit, std::unordered_set<std::string>& visited)
+bool helpIds(const std::string& current, int depth, int limit, std::unordered_set<std::string>& visited)
 {
     if (current == TARGET) return true;
     if (depth == limit) return false;
@@ -171,7 +205,7 @@ bool helpDfs(const std::string& current, int depth, int limit, std::unordered_se
     for (const std::string& neighbour : getNeighbours(current))
     {
         if (visited.contains(neighbour)) continue;
-        if (helpDfs(neighbour, depth + 1, limit, visited)) return true;
+        if (helpIds(neighbour, depth + 1, limit, visited)) return true;
     }
 
     visited.erase(current);

@@ -20,6 +20,8 @@ std::string generateSequence(int width, int steps);
 std::vector<std::string> getNeighbours(const std::string& input);
 int bfs(const std::string& input);
 int dfs(const std::string& input);
-bool helpDfs(const std::string& current, int depth, int limit, std::unordered_set<std::string>& visited);
+int helpDfs(const std::string& current, int depth, std::unordered_set<std::string>& visited);
+int ids(const std::string& input);
+bool helpIds(const std::string& current, int depth, int limit, std::unordered_set<std::string>& visited);
 
 #endif //IS_LABS_CRAZYPYATNASHKI_H
