@@ -1,8 +1,11 @@
 // CrazyPyatnashki.h
-#pragma once          // или #ifndef-гард
+#pragma once          /
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <ctime>
+#include <random>
+#include <stdexcept>
 
 using u64 = uint64_t;
 

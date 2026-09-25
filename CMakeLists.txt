@@ -18,4 +18,6 @@ add_executable(lab_2
         lab_2/CrazyPyatnashki.cpp
         lab_2/CrazyPyatnashki.h
         lab_2/main.cpp
+        lab_2/custom_set.h
+        lab_2/custom_map.h
 )
