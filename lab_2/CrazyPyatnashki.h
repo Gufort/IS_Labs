@@ -1,11 +1,14 @@
 // CrazyPyatnashki.h
-#pragma once          /
+#pragma once
 #include <string>
 #include <vector>
 #include <cstdint>
 #include <ctime>
 #include <random>
 #include <stdexcept>
+#include <queue>
+#include "custom_map.h"
+#include "custom_set.h"
 
 using u64 = uint64_t;
 
@@ -24,3 +27,14 @@ std::vector<u64> getNeighbours(u64 state);
 extern int  newBlankTable[BOARD_SIZE][4];
 extern bool isMovesInit;
 void initializeMoves();
+std::string stateToString(uint64_t state);
+u64 parseState(const std::string& input);
+
+void initManhattan();
+int  heuristic(u64 state);
+
+int bfs(u64 state);
+int dfs(u64 state, int maxDepth);
+int helpDfs(u64 currentState, int depth, int limit, custom_set& visited);
+int ids(u64 state);
+bool helpIds(u64 current, int depth, int limit, custom_set& visited);

@@ -5,9 +5,9 @@
 
 using u64 = uint64_t;
 
-class U64Map {
+class custom_map {
 public:
-    explicit U64Map(size_t capacity = 22)
+    explicit custom_map(size_t capacity = 22)
         : mask((1ULL << capacity) - 1),
           keys(mask + 1, 0),
           vals(mask + 1, 0),
@@ -51,5 +51,5 @@ private:
     size_t mask;
     std::vector<u64> keys;
     std::vector<int> vals;
-    std::vector<u64> used;
+    std::vector<uint8_t> used;
 };
