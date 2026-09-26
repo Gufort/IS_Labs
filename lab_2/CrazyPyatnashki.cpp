@@ -77,7 +77,7 @@ std::string stateToString(uint64_t state)
 }
 
 // Проверка на разрешимость заданной последовательности
-inline int countOfInversions(uint64_t state)
+int countOfInversions(uint64_t state)
 {
     std::vector<int> values;
     values.reserve(BOARD_SIZE - 1);
@@ -100,7 +100,7 @@ inline int countOfInversions(uint64_t state)
     return count;
 }
 
-inline bool isSolvable(u64 state)
+bool isSolvable(u64 state)
 {
     const int inversions = countOfInversions(state);
     const int blankPos = findBlankPosition(state);
@@ -180,6 +180,61 @@ int helpDfs(u64 current, int depth, int limit, custom_set& visited)
     return -1;
 }
 
+// Конфликты по строкам и столбцам
+static int goalRow[16];   // goalRow[t] = строка, где должна стоять плитка t
+static int goalCol[16];   // goalCol[t] = столбец, где должна стоять плитка t
+
+static int linearConflict(u64 state)
+{
+    int tiles[16];
+    for (int i = 0; i < 16; ++i)
+        tiles[i] = getNibble(state, i);
+
+    int conflicts = 0;
+
+    // Конфликты по строкам
+    for (int r = 0; r < BOARD_WIDTH; ++r) {
+        for (int c1 = 0; c1 < BOARD_WIDTH; ++c1) {
+            const int t1 = tiles[r * BOARD_WIDTH + c1];
+            if (t1 == 0) continue;
+            if (goalRow[t1] != r) continue;             // t1 не в своей строке
+            const int gc1 = goalCol[t1];
+
+            for (int c2 = c1 + 1; c2 < BOARD_WIDTH; ++c2) {
+                const int t2 = tiles[r * BOARD_WIDTH + c2];
+                if (t2 == 0) continue;
+                if (goalRow[t2] != r) continue;         // t2 не в своей строке
+                const int gc2 = goalCol[t2];
+
+                // t1 левее t2 на поле, но в цели t1 должна быть правее
+                if (gc1 > gc2) conflicts += 2;
+            }
+        }
+    }
+
+    // Конфликты по столбцам — аналогично
+    for (int c = 0; c < BOARD_WIDTH; ++c) {
+        for (int r1 = 0; r1 < BOARD_WIDTH; ++r1) {
+            const int t1 = tiles[r1 * BOARD_WIDTH + c];
+            if (t1 == 0) continue;
+            if (goalCol[t1] != c) continue;             // t1 не в своём столбце
+            const int gr1 = goalRow[t1];
+
+            for (int r2 = r1 + 1; r2 < BOARD_WIDTH; ++r2) {
+                const int t2 = tiles[r2 * BOARD_WIDTH + c];
+                if (t2 == 0) continue;
+                if (goalCol[t2] != c) continue;         // t2 не в своём столбце
+                const int gr2 = goalRow[t2];
+
+                // t1 выше t2, но в цели t1 должна быть ниже
+                if (gr1 > gr2) conflicts += 2;
+            }
+        }
+    }
+
+    return conflicts;
+}
+
 // Манхэттенское расстояние
 static int  manhattan[16][16];
 static bool manhattanInit = false;
@@ -188,6 +243,8 @@ void initManhattan()
 {
     for (int t = 1; t <= 15; ++t) {
         const int target = t - 1;
+        goalRow[t] = (t - 1) / BOARD_WIDTH;
+        goalCol[t] = (t - 1) % BOARD_WIDTH;
         const int tr = target / BOARD_WIDTH;
         const int tc = target % BOARD_WIDTH;
         for (int pos = 0; pos < BOARD_SIZE; ++pos) {
@@ -206,7 +263,7 @@ int heuristic(u64 state)
         const int t = getNibble(state, pos);
         if (t) sum += manhattan[t][pos];
     }
-    return sum;
+    return sum + linearConflict(state);
 }
 
 // IDS
@@ -271,8 +328,8 @@ int astar(u64 state)
             if (closed.contains(neighbour)) continue;
 
             int ng = 1 + g;
-            const int* old = g_score.find(neighbour);
-            if (old && *old <= ng) continue;
+            const int* old = g_score.find(neighbour); // лучшее положение для соседа
+            if (old && *old <= ng) continue; // новый путь хуже, идем дальше
 
             g_score.insert_or_assign(neighbour, ng);
             open.push({ ng + heuristic(neighbour), neighbour });
@@ -297,7 +354,7 @@ int idaStar(u64 state)
     while (true)
     {
         visited.clear();
-        int nextThreshold = inf;
+        int nextThreshold = inf; // min f, что превысило threshold
         auto res = helpIdaStar(state, 0, threshold, visited, nextThreshold);
 
         if (res >= 0) return res;
