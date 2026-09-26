@@ -21,20 +21,22 @@ int main()
     // }
     std::vector<std::string> generatedStrings = {
         "123456789ABCDEF0",
-        "16245A3709C8DEBF"
+        "16245A3709C8DEBF",
+        "7023168459ACDEBF",
+        "FE169B4C0A73D852"
     };
 
-    std::cout << '\n' << "==> BFS " << std::endl;
-    for (int i = 0; i < 2; ++i)
-    {
-        auto start = std::chrono::steady_clock::now();
-        int steps = bfs(parseState(generatedStrings[i]));
-        auto end = std::chrono::steady_clock::now();
-        auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-        std::cout << "Sequence " << i + 1 << ": " << generatedStrings[i]
-                  << " | solution found in " << steps << " steps"
-                  << " | time: " << elapsedMs << " ms" << std::endl;
-    }
+    // std::cout << '\n' << "==> BFS " << std::endl;
+    // for (int i = 0; i < 4; ++i)
+    // {
+    //     auto start = std::chrono::steady_clock::now();
+    //     int steps = bfs(parseState(generatedStrings[i]));
+    //     auto end = std::chrono::steady_clock::now();
+    //     auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    //     std::cout << "Sequence " << i + 1 << ": " << generatedStrings[i]
+    //               << " | solution found in " << steps << " steps"
+    //               << " | time: " << elapsedMs << " ms" << std::endl;
+    // }
 
     // std::cout << '\n' << "==> DFS " << std::endl;
     // for (int i = 0; i < 10; ++i)
@@ -49,7 +51,7 @@ int main()
     // }
 
     std::cout << '\n' << "==> IDS " << std::endl;
-    for (int i = 0; i < 2; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         auto start = std::chrono::steady_clock::now();
         int steps = ids(parseState(generatedStrings[i]));
@@ -60,5 +62,30 @@ int main()
                   << " | time: " << elapsedMs << " ms" << std::endl;
     }
 
+    std::cout << '\n' << "==> A* " << std::endl;
+    for (int i = 0; i < 4; ++i)
+    {
+        auto start = std::chrono::steady_clock::now();
+        int steps = astar(parseState(generatedStrings[i]));
+        auto end = std::chrono::steady_clock::now();
+        auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "Sequence " << i + 1 << ": " << generatedStrings[i]
+                  << " | solution found in " << steps << " steps"
+                  << " | time: " << elapsedMs << " ms" << std::endl;
+    }
+
+    std::cout << '\n' << "==> IDA* " << std::endl;
+    for (int i = 0; i < 4; ++i)
+    {
+        auto start = std::chrono::steady_clock::now();
+        int steps = idaStar(parseState(generatedStrings[i]));
+        auto end = std::chrono::steady_clock::now();
+        auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        std::cout << "Sequence " << i + 1 << ": " << generatedStrings[i]
+                  << " | solution found in " << steps << " steps"
+                  << " | time: " << elapsedMs << " ms" << std::endl;
+    }
+
     return 0;
 }
+

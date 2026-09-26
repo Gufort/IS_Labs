@@ -241,6 +241,97 @@ bool helpIds(u64 current, int depth, int limit, custom_set& visited)
     return false;
 }
 
+// A*
+int astar(u64 state)
+{
+    if (!isSolvable(state)) throw std::runtime_error("not solvable " + stateToString(state));
+    if (state == TARGET) return 0;
+    if (!manhattanInit) initManhattan();
+
+    std::priority_queue<std::pair<int, u64>, std::vector<std::pair<int, u64>>, std::greater<>> open; // f, state (f = g + h), храним в виде вектора
+    custom_map g_score(23); // лучшая длина от старта до текущего узла
+    custom_set closed(23);
+
+    g_score.insert_or_assign(state, 0);
+    open.push({heuristic(state), state});
+
+    while (!open.empty())
+    {
+        auto [f, current] = open.top();
+        open.pop();
+
+        if (closed.contains(current)) continue;
+        closed.insert(current);
+
+        const int g = *g_score.find(current);
+        if (current == TARGET) return g;
+
+        for (auto neighbour : getNeighbours(current))
+        {
+            if (closed.contains(neighbour)) continue;
+
+            int ng = 1 + g;
+            const int* old = g_score.find(neighbour);
+            if (old && *old <= ng) continue;
+
+            g_score.insert_or_assign(neighbour, ng);
+            open.push({ ng + heuristic(neighbour), neighbour });
+        }
+    }
+
+    return -1;
+}
+
+// IDA*
+int idaStar(u64 state)
+{
+    int inf = 1000000000;
+    if (!isSolvable(state))
+        throw std::runtime_error("not solvable " + stateToString(state));
+    if (state == TARGET) return 0;
+    if (!manhattanInit) initManhattan();
+
+    int threshold = heuristic(state);
+    custom_set visited(22);
+
+    while (true)
+    {
+        visited.clear();
+        int nextThreshold = inf;
+        auto res = helpIdaStar(state, 0, threshold, visited, nextThreshold);
+
+        if (res >= 0) return res;
+        if (nextThreshold >= inf) return -1;
+
+        threshold = nextThreshold;
+    }
+}
+
+int helpIdaStar(u64 current, int g, int threshold, custom_set& visited, int& nextThreshold)
+{
+    const int f = g + heuristic(current);
+    if (f > threshold) {
+        if (f < nextThreshold) nextThreshold = f;
+        return -1;
+    }
+
+    if (current == TARGET) return g;
+
+    visited.insert(current);
+
+    for (auto neighbour : getNeighbours(current))
+    {
+        if (visited.contains(neighbour)) continue;
+
+        const int res = helpIdaStar(neighbour, g + 1, threshold, visited, nextThreshold);
+
+        if (res >= 0) return res;
+    }
+
+    visited.erase(current);
+    return -1;
+}
+
 
 
 

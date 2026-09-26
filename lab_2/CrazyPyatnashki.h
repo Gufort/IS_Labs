@@ -38,3 +38,6 @@ int dfs(u64 state, int maxDepth);
 int helpDfs(u64 currentState, int depth, int limit, custom_set& visited);
 int ids(u64 state);
 bool helpIds(u64 current, int depth, int limit, custom_set& visited);
+int astar(u64 state);
+int idaStar(u64 state);
+int helpIdaStar(u64 current, int g, int threshold, custom_set& visited, int& nextThreshold);
