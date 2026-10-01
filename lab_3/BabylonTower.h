@@ -1,0 +1,238 @@
+#pragma once
+#include <cstdint>
+#include <array>
+#include <iosfwd>
+#include <iostream>
+#include <vector>
+
+using State = std::array<char, 26>;
+
+constexpr int DISCS = 5;
+constexpr int POSITIONS = 5;
+constexpr int TOP = 0;
+constexpr int TOP_COL = 0;
+
+constexpr State GOAL_STATE = {
+    '.',
+    'r','w','g','b','y',
+    'r','w','g','b','y',
+    'r','w','g','b','y',
+    'r','w','g','b','y',
+    'r','w','g','b','y'
+};
+
+constexpr int idx(int row, int column){ return row * POSITIONS + column; }
+
+// Движения
+enum class MoveType
+{
+    Row, // Поворот диска
+    Column, // Движение по вертикали вдоль колонки
+    SwapTop // Свап с пустой верхней ячейкой
+};
+
+struct Move
+{
+    MoveType type;
+    uint8_t index = 0; // индекс в рамках типа движения, [0, 5)
+    int8_t direction = 0; // направление движения в рамках типа: -1 -> вниз/влево, +1 -> вверх/вправо, 0 - манипуляции с пустой ячейкой
+
+    friend bool operator==(const Move&, const Move&) = default;
+};
+
+std::ostream& operator<<(std::ostream& os, const Move& move)
+{
+    switch (move.type)
+    {
+    case MoveType::Row:
+        os << "R" << static_cast<int>(move.index);
+        os << (move.direction > 0 ? " ->" : " <-");
+        break;
+
+    case MoveType::Column:
+        os << "C" << static_cast<int>(move.index);
+        os << (move.direction > 0 ? " down" : " up");
+        break;
+
+    case MoveType::SwapTop:
+        os << "SwapTop";
+        break;
+    }
+
+    return os;
+}
+
+// Класс этой игрушки
+class BabylonTower
+{
+    public:
+    explicit BabylonTower(const State& state): _state(state) {}
+    const State& state() const { return _state; }
+    bool isSolved() const { return _state == GOAL_STATE; }
+
+    // Все возможные ходы
+    std::vector<Move> moves() const
+    {
+        std::vector<Move> moves;
+        moves.reserve(21);
+
+        for (auto r = 0; r < DISCS; ++r)
+        {
+            if (rowUniform(r)) continue;
+            moves.push_back({ MoveType::Row, r, +1 });
+            moves.push_back({ MoveType::Row, r, -1 });
+        }
+
+        for (auto c = 0; c < POSITIONS; ++c)
+        {
+            if (colUniform(c)) continue;
+            moves.push_back({ MoveType::Column, c, -1 });
+            moves.push_back({ MoveType::Column, c, +1 });
+        }
+
+        // Обмен верхней ячейки с верхним диском.
+        // Имеет смысл только если ровно одна из них пустая.
+        const bool topEmpty = state_[TOP] == '.';
+        const bool diskEmpty = state_[idx(0, TOP_COL)] == '.';
+
+        if (topEmpty != diskEmpty)
+            moves.push_back({ MoveType::SwapTop, 0, 0});
+
+        return moves;
+    }
+
+    // Применение хода
+    BabylonTower applyMove(const Move& move) const
+    {
+        State next = _state;
+
+        switch (move.type)
+        {
+            case MoveType::Row: rotateRow(next, move.index, move.direction); break;
+            case MoveType::Column: rotateColumn(next, move.index, move.direction); break;
+            case MoveType::SwapTop: std::swap(next[TOP], next[idx(0, TOP_COL)]); break;
+        }
+
+        return BabylonTower(next);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const BabylonTower& tower)
+    {
+        os << "        ";
+
+        for (int c = 0; c < POSITIONS; ++c)
+        {
+            if (c == TOP_COL)
+                os << "[ " << tower._state[TOP] << " ]";
+            else
+                os << "     ";
+        }
+
+        os << '\n';
+        os << "    +---+---+---+---+---+\n";
+
+        // Диски
+        for (int r = 0; r < DISCS; ++r)
+        {
+            os << "    |";
+
+            for (int c = 0; c < POSITIONS; ++c)
+            {
+                char value = tower._state[idx(r, c)];
+
+                if (value == '.')
+                    os << " . |";
+                else
+                    os << ' ' << value << " |";
+            }
+
+            os << '\n';
+            os << "    +---+---+---+---+---+\n";
+        }
+
+        return os;
+    }
+
+
+    private:
+    State _state;
+
+    // Все ли шарики одинакового цвета в рамках текущей строки
+    bool rowUniform(int row) const
+    {
+        const char first = _state[idx(row, 0)];
+        for (int col = 1; col < POSITIONS; ++col)
+        {
+            if (_state[idx(row, col)] != first)
+                return false;
+        }
+        return true;
+    }
+
+    // Все ли шарики одинакового цвета в рамках текущего столбца
+    bool colUniform(int col) const
+    {
+        const char first = _state[idx(0, col)];
+        for (int row = 1; row < DISCS; ++row)
+        {
+            if (_state[idx(row, col)] != first)
+                return false;
+        }
+        return true;
+    }
+
+    static void rotateRow(State& state, int row, int direction)
+    {
+        if (direction > 0)
+        {
+            const char first = state[idx(row, 0)];
+            for (int column = 0; column < POSITIONS - 1; ++column)
+            {
+                state[idx(row, column)] = state[idx(row, column + 1)];
+            }
+
+            state[idx(row, POSITIONS - 1)] = first;
+        }
+        else
+        {
+            const char last = state[idx(row, 0)];
+            for (int column = 0; column < POSITIONS - 1; ++column)
+            {
+                state[idx(row, column)] = state[idx(row, column - 1)];
+            }
+
+            state[idx(row, POSITIONS - 1)] = last;
+        }
+    }
+
+    // Вертикальный сдвиг колонки
+    static void rotateColumn(State& state, int column, int direction)
+    {
+        if (direction > 0)
+        {
+            const char first = state[idx(0, column)];
+
+            for (int row = 0; row < DISCS - 1; ++row)
+            {
+                state[idx(row, column)] = state[idx(row + 1, column)];
+            }
+
+            state[idx(DISCS - 1, column)] = first;
+        }
+        else
+        {
+            const char last = state[idx(DISCS - 1, column)];
+
+            for (int row = 0; row < DISCS - 1; ++row)
+            {
+                state[idx(row, column)] = state[idx(row - 1, column)];
+            }
+
+            state[idx(DISCS - 1, column)] = last;
+        }
+    }
+};
+
+
+
+
