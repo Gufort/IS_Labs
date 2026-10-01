@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(lab_1
         lab_1/main.cpp
         lab_1/simple_test.cpp
+        lab_3/main.cpp
+        lab_3/BabylonTower.h
+        lab_3/BabylonTower.cpp
+        lab_3/main.cpp
 )
 
 add_executable(lab_1_bonus
@@ -20,4 +24,10 @@ add_executable(lab_2
         lab_2/main.cpp
         lab_2/custom_set.h
         lab_2/custom_map.h
+)
+
+add_executable(lab_3
+        lab_3/BabylonTower.cpp
+        lab_3/BabylonTower.h
+        lab_3/main.cpp
 )

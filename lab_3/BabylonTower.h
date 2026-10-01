@@ -4,6 +4,11 @@
 #include <iosfwd>
 #include <iostream>
 #include <vector>
+#include <chrono>
+#include <optional>
+#include <unordered_set>
+#include <unordered_map>
+#include <queue>
 
 using State = std::array<char, 26>;
 
@@ -11,7 +16,7 @@ constexpr int DISCS = 5;
 constexpr int POSITIONS = 5;
 constexpr int TOP = 0;
 constexpr int TOP_COL = 0;
-
+constexpr char colors[] = { 'r', 'w', 'g', 'b', 'y' };
 constexpr State GOAL_STATE = {
     '.',
     'r','w','g','b','y',
@@ -21,7 +26,23 @@ constexpr State GOAL_STATE = {
     'r','w','g','b','y'
 };
 
-constexpr int idx(int row, int column){ return row * POSITIONS + column; }
+struct StateHash
+{
+    std::size_t operator()(const State& s) const noexcept
+    {
+        std::size_t h = 1469598103934665603ull;
+
+        for (char c : s)
+        {
+            h ^= static_cast<unsigned char>(c);
+            h *= 1099511628211ull;
+        }
+
+        return h;
+    }
+};
+
+constexpr int idx(int row, int column) { return 1 + row * POSITIONS + column; }
 
 // Движения
 enum class MoveType
@@ -40,7 +61,7 @@ struct Move
     friend bool operator==(const Move&, const Move&) = default;
 };
 
-std::ostream& operator<<(std::ostream& os, const Move& move)
+inline std::ostream& operator<<(std::ostream& os, const Move& move)
 {
     switch (move.type)
     {
@@ -79,21 +100,21 @@ class BabylonTower
         for (auto r = 0; r < DISCS; ++r)
         {
             if (rowUniform(r)) continue;
-            moves.push_back({ MoveType::Row, r, +1 });
-            moves.push_back({ MoveType::Row, r, -1 });
+            moves.push_back({ MoveType::Row, static_cast<uint8_t>(r), +1 });
+            moves.push_back({ MoveType::Row, static_cast<uint8_t>(r), -1 });
         }
 
         for (auto c = 0; c < POSITIONS; ++c)
         {
             if (colUniform(c)) continue;
-            moves.push_back({ MoveType::Column, c, -1 });
-            moves.push_back({ MoveType::Column, c, +1 });
+            moves.push_back({ MoveType::Column, static_cast<uint8_t>(c), -1 });
+            moves.push_back({ MoveType::Column, static_cast<uint8_t>(c), +1 });
         }
 
         // Обмен верхней ячейки с верхним диском.
         // Имеет смысл только если ровно одна из них пустая.
-        const bool topEmpty = state_[TOP] == '.';
-        const bool diskEmpty = state_[idx(0, TOP_COL)] == '.';
+        const bool topEmpty = _state[TOP] == '.';
+        const bool diskEmpty = _state[idx(0, TOP_COL)] == '.';
 
         if (topEmpty != diskEmpty)
             moves.push_back({ MoveType::SwapTop, 0, 0});
@@ -187,21 +208,15 @@ class BabylonTower
         {
             const char first = state[idx(row, 0)];
             for (int column = 0; column < POSITIONS - 1; ++column)
-            {
                 state[idx(row, column)] = state[idx(row, column + 1)];
-            }
-
             state[idx(row, POSITIONS - 1)] = first;
         }
         else
         {
-            const char last = state[idx(row, 0)];
-            for (int column = 0; column < POSITIONS - 1; ++column)
-            {
+            const char last = state[idx(row, POSITIONS - 1)];
+            for (int column = POSITIONS - 1; column > 0; --column)
                 state[idx(row, column)] = state[idx(row, column - 1)];
-            }
-
-            state[idx(row, POSITIONS - 1)] = last;
+            state[idx(row, 0)] = last;
         }
     }
 
@@ -211,28 +226,22 @@ class BabylonTower
         if (direction > 0)
         {
             const char first = state[idx(0, column)];
-
             for (int row = 0; row < DISCS - 1; ++row)
-            {
                 state[idx(row, column)] = state[idx(row + 1, column)];
-            }
-
             state[idx(DISCS - 1, column)] = first;
         }
         else
         {
             const char last = state[idx(DISCS - 1, column)];
-
             for (int row = 0; row < DISCS - 1; ++row)
-            {
                 state[idx(row, column)] = state[idx(row - 1, column)];
-            }
-
             state[idx(DISCS - 1, column)] = last;
         }
     }
 };
 
-
-
+bool dfsHelper(const BabylonTower& tower, int depth, int limit, std::unordered_set<State, StateHash>& pathVisited,
+    std::vector<Move>& path, const std::optional<Move>& previousMove);
+int dfs(const BabylonTower& start, std::vector<Move>& path, int limit);
+int ids(const BabylonTower& start, std::vector<Move>& solution, int maxDepth = 60);
 
