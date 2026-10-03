@@ -6,8 +6,7 @@ bool isValid(const State& state) {
     for (int i = 1; i <= 25; ++i) {
         char v = state[i];
         if (v == '.') { ++dots; continue; }
-        int col = -1;
-        for (int j = 0; j < 5; ++j) if (v == colors[j]) { col = j; break; }
+        int col = colorIdx(v);
         if (col < 0) return false;
         ++count[col];
     }
@@ -25,20 +24,13 @@ bool isValid(const State& state) {
     return true;
 }
 
-int colorColumn(char color) {
-    for (int c = 0; c < POSITIONS; ++c)
-        if (colors[c] == color) return c;
-    return -1;
-}
-
 /*
 
  */
-static constexpr int PDB_TOP = 7776;
-static constexpr int PDB_SIZE = 15552;
+static constexpr int PDB_TOP  = 7776;   // 6^5
+static constexpr int PDB_SIZE = 15552;  // 2 * 6^5
 
 static std::array<std::array<int16_t, PDB_SIZE>, 5> g_pdb;
-static bool isPdbBuilt = false;
 
 // Работаем системе счисления по основанию 6
 static inline int encodeCounts(
@@ -54,6 +46,7 @@ static inline int encodeCounts(
     }
     return code;
 }
+
 static inline void decodeCounts(int code, int cnt[5], int& top) {
     top = (code >= PDB_TOP);
     if (top) code -= PDB_TOP;
@@ -66,24 +59,28 @@ static inline void decodeCounts(int code, int cnt[5], int& top) {
 
 static void buildPDB()
 {
-    if (isPdbBuilt) return;
-    isPdbBuilt = true;
+    static bool built = false;
+    if (built) return;
+    built = true;
 
     // Построение таблицы для каждого из цветов
-    for (auto target = 0; target < 5; ++target)
+    for (int target = 0; target < 5; ++target)
     {
         auto& dist = g_pdb[target];
         dist.fill(-1); // берем табличку для текущего цвета, ни одно значение мы пока не посетили
-        std::queue<int> q;
+
+        // Свой BFS-очередь на массиве — быстрее std::queue
+        static int queueBuf[PDB_SIZE];
+        int head = 0, tail = 0;
 
         int cnt[5] = {}; cnt[target] = 5; // Логично, что целевым будет столбец с 5 шарами одного цвета
         int start = encodeCounts(cnt, 0);
         dist[start] = 0; // ибо за 0 шагов в это состояние придем, ага ого
-        q.push(start);
+        queueBuf[tail++] = start;
 
-        while (!q.empty())
+        while (head < tail)
         {
-            int code = q.front(); q.pop();
+            int code = queueBuf[head++];
             int d = dist[code], top, curr[5];
             decodeCounts(code, curr, top);
 
@@ -131,7 +128,7 @@ static void buildPDB()
                     if (dist[new_code] == -1)
                     {
                         dist[new_code] = (int16_t)(d + 1);
-                        q.push(new_code);
+                        queueBuf[tail++] = new_code;
                     }
                 }
             }
@@ -151,7 +148,7 @@ static void buildPDB()
                     if (dist[new_code] == -1)
                     {
                         dist[new_code] = (int16_t)(d + 1);
-                        q.push(new_code);
+                        queueBuf[tail++] = new_code;
                     }
                 }
             }
@@ -165,7 +162,7 @@ static void buildPDB()
                 if (dist[new_code] == -1)
                 {
                     dist[new_code] = (int16_t)(d + 1);
-                    q.push(new_code);
+                    queueBuf[tail++] = new_code;
                 }
             }
         }
@@ -177,18 +174,18 @@ int heuristic(const State& state)
     buildPDB();
 
     int cnt[5][5] = {}; // сколько дисков цвета i в столбце j
-    int topColor = (state[TOP] == '.') ? -1 : colorColumn(state[TOP]);
+    char topChar = state[TOP];
+    int topColor = (topChar == '.') ? -1 : colorIdx(topChar);
 
     // После циклов cnt[color][k] содержит распределение дисков каждого цвета по колонкам
-    for (int row = 0; row < DISCS; ++row)
-    {
-        for (int column = 0; column < POSITIONS; ++column)
-        {
-            char value = state[idx(row, column)];
-            if (value == '.') continue;
-            int color = colorColumn(value);
-            if (color >= 0) ++cnt[color][column];
-        }
+    // Один проход по всем 25 позициям: column = (i-1) % 5
+    for (int i = 1; i <= 25; ++i) {
+        char v = state[i];
+        if (v == '.') continue;
+        int color = colorIdx(v);
+        if (color < 0) continue;
+        int column = (i - 1) % POSITIONS;
+        ++cnt[color][column];
     }
 
     int sum = 0, max = 0;
@@ -210,18 +207,25 @@ static bool isReverse(const Move& a, const Move& b) {
     return a.direction == -b.direction;
 }
 
+// Глобальная таблица транспозиций для IDA*: для данного состояния храним
+// максимальную оставшуюся глубину, для которой поддерево уже полностью
+// исследовано и не дало решения.
+static std::unordered_map<uint64_t, int> g_maxRem;
+
 // Вспомогательная функция для рассматриваемых алгоритмов поиска
 static bool dfsHelper(BabylonTower& tower, int depth, int limit,
-    std::unordered_map<State, int, StateHash>& best,
     std::vector<Move>& path,
     const std::optional<Move>& prev, int h)
 {
     if (tower.isSolved())          return true;
     if (depth + h > limit)     return false;
 
-    auto it = best.find(tower.state());
-    if (it != best.end() && it->second <= depth) return false;
-    best[tower.state()] = depth;
+    uint64_t key = pack(tower.state());
+    int rem = limit - depth;
+
+    auto it = g_maxRem.find(key);
+    if (it != g_maxRem.end() && it->second >= rem) return false;
+    g_maxRem[key] = rem;
 
     // Ищем самые перспективные пути по h
     std::pair<int, Move> cand[32];
@@ -232,25 +236,31 @@ static bool dfsHelper(BabylonTower& tower, int depth, int limit,
     for (int i = 0; i < m; ++i)
     {
         if (prev && isReverse(*prev, buf[i])) continue;
+
         tower.applyMove(buf[i]);
         int new_h = heuristic(tower.state());
         tower.undoMove(buf[i]);
+
         if (depth + 1 + new_h > limit) continue;
         cand[n++] = { new_h, buf[i] };
     }
 
-    // Сортируем по эвристике
-    std::sort(cand, cand + n,
-          [](const std::pair<int, Move>& a, const std::pair<int, Move>& b)
-          {
-              return a.first < b.first;
-          });
+    // Сортируем по эвристике (вставками — для ≤20 элементов быстрее std::sort)
+    for (int i = 1; i < n; ++i) {
+        auto key2 = cand[i];
+        int j = i - 1;
+        while (j >= 0 && cand[j].first > key2.first) {
+            cand[j + 1] = cand[j];
+            --j;
+        }
+        cand[j + 1] = key2;
+    }
 
     for (int i = 0; i < n; ++i)
     {
         path.push_back(cand[i].second);
         tower.applyMove(cand[i].second);
-        if (dfsHelper(tower, depth + 1, limit, best, path, cand[i].second, cand[i].first))
+        if (dfsHelper(tower, depth + 1, limit, path, cand[i].second, cand[i].first))
             return true;
         tower.undoMove(cand[i].second);
         path.pop_back();
@@ -266,9 +276,10 @@ int dfs(BabylonTower& tower, std::vector<Move>& solution, int limit)
     if (tower.isSolved())
         return 0;
 
-    std::unordered_map<State, int, StateHash> best;
+    g_maxRem.clear();
+    g_maxRem.reserve(1 << 16);
 
-    if (dfsHelper(tower, 0, limit, best, solution, std::nullopt, heuristic(tower.state())))
+    if (dfsHelper(tower, 0, limit, solution, std::nullopt, heuristic(tower.state())))
         return static_cast<int>(solution.size());
 
     return -1;
@@ -282,11 +293,18 @@ int ids(BabylonTower& tower, std::vector<Move>& solution, int maxDepth)
     if (tower.isSolved())
         return 0;
 
-    for (int limit = heuristic(tower.state()); limit <= maxDepth; ++limit)
+    int h0 = heuristic(tower.state());
+
+    // Таблица НЕ очищается между итерациями: если поддерево уже исследовано
+    // при меньшей (или равной) оставшейся глубине, повторно идти туда не нужно.
+    g_maxRem.clear();
+    g_maxRem.reserve(1 << 20);
+
+    for (int limit = h0; limit <= maxDepth; ++limit)
     {
-        std::unordered_map<State, int, StateHash> best;
         std::vector<Move> path;
-        if (dfsHelper(tower, 0, limit, best, path, std::nullopt, heuristic(tower.state()))) {
+        path.reserve(limit);
+        if (dfsHelper(tower, 0, limit, path, std::nullopt, h0)) {
             solution = std::move(path);
             return (int)solution.size();
         }
@@ -305,18 +323,22 @@ int astar(BabylonTower& start, std::vector<Move>& solution, int maxDepth)
 
     struct Node { State state;
         int g, parent; // parent — индекс родителя в векторе nodes (-1 у корня), g - стоимость пути от старта до текущей
-        Move move; };
+        Move move; Move prev; bool hasPrev; };
     struct Item { int f, g, idx; }; // Для оценки
     struct Cmp  { bool operator()(const Item& a, const Item& b) const {
         return a.f != b.f ? a.f > b.f : a.g < b.g;
     }};
 
     std::vector<Node> nodes;
-    std::unordered_map<State, int, StateHash> bestG;
+    nodes.reserve(1 << 16);
+
+    std::unordered_map<uint64_t, int> bestG;
+    bestG.reserve(1 << 16);
+
     std::priority_queue<Item, std::vector<Item>, Cmp> pq;
 
-    nodes.push_back({ start.state(), 0, -1, Move{} });
-    bestG.emplace(start.state(), 0);
+    nodes.push_back({ start.state(), 0, -1, Move{}, Move{}, false });
+    bestG.emplace(pack(start.state()), 0);
     pq.push({ heuristic(start.state()), 0, 0 });
 
     BabylonTower tower = start;
@@ -326,7 +348,8 @@ int astar(BabylonTower& start, std::vector<Move>& solution, int maxDepth)
         Item top = pq.top(); pq.pop();
         const int g = top.g, idx = top.idx;
 
-        auto bit = bestG.find(nodes[idx].state);
+        uint64_t key = pack(nodes[idx].state);
+        auto bit = bestG.find(key);
         if (bit != bestG.end() && bit->second < g) continue; // Проверка на устаревшую запись
 
         tower = BabylonTower(nodes[idx].state);
@@ -344,20 +367,24 @@ int astar(BabylonTower& start, std::vector<Move>& solution, int maxDepth)
         int m = tower.moves(buf);
         for (int k = 0; k < m; ++k)
         {
+            if (nodes[idx].hasPrev && isReverse(nodes[idx].prev, buf[k])) continue;
+
             tower.applyMove(buf[k]);
             State ns = tower.state();
             tower.undoMove(buf[k]);
 
+            uint64_t nkey = pack(ns);
             int ng = g + 1;
-            auto nit = bestG.find(ns);
+            auto nit = bestG.find(nkey);
             if (nit != bestG.end() && nit->second <= ng) continue;
-            bestG[ns] = ng;
+            bestG[nkey] = ng;
 
             int nf = ng + heuristic(ns);
-            if (nf > maxDepth + 1) continue;
+            if (nf > maxDepth) continue;
 
-            nodes.push_back({ ns, ng, idx, buf[k] });
+            nodes.push_back({ ns, ng, idx, buf[k], buf[k], true });
             pq.push({ nf, ng, (int)nodes.size() - 1 });
         }
     }
+    return -1;
 }

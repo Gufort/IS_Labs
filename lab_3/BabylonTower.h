@@ -29,21 +29,28 @@ constexpr State GOAL_STATE = {
     'r','w','g','b','y'
 };
 
-struct StateHash
-{
-    std::size_t operator()(const State& s) const noexcept
-    {
-        std::size_t h = 1469598103934665603ull;
+// Таблица для быстрого поиска индекса цвета
+inline int g_colorIdxTable[256] = {};
+inline bool g_colorIdxInit = [] {
+    for (auto& v : g_colorIdxTable) v = -1;
+    for (int i = 0; i < 5; ++i)
+        g_colorIdxTable[(unsigned char)colors[i]] = i;
+    return true;
+}();
 
-        for (char c : s)
-        {
-            h ^= static_cast<unsigned char>(c);
-            h *= 1099511628211ull;
-        }
+inline int colorIdx(char c) { return g_colorIdxTable[(unsigned char)c]; }
 
-        return h;
+// Упаковка состояния в uint64_t
+inline uint64_t pack(const State& s) {
+    uint64_t code = 0;
+    int empty = 0;
+    for (int i = 0; i < 26; ++i) {
+        char c = s[i];
+        if (c == '.') { empty = i; continue; }
+        code = code * 5u + (uint64_t)g_colorIdxTable[(unsigned char)c];
     }
-};
+    return (code << 5) | (uint64_t)empty;
+}
 
 constexpr int idx(int row, int column) { return 1 + row * POSITIONS + column; }
 
@@ -240,10 +247,6 @@ private:
     }
 };
 
-static bool dfsHelper(BabylonTower& tower, int depth, int limit,
-    std::unordered_map<State, int, StateHash>& best,
-    std::vector<Move>& path,
-    const std::optional<Move>& prev, int h);
 int dfs(BabylonTower& tower, std::vector<Move>& solution, int limit);
 int ids(BabylonTower& tower, std::vector<Move>& solution, int maxDepth);
 int astar(BabylonTower& start, std::vector<Move>& solution, int maxDepth);
