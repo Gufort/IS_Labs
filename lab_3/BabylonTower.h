@@ -9,6 +9,9 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <queue>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
 
 using State = std::array<char, 26>;
 
@@ -47,7 +50,7 @@ constexpr int idx(int row, int column) { return 1 + row * POSITIONS + column; }
 // Движения
 enum class MoveType
 {
-    Row, // Поворот диска
+    Row,    // Поворот диска
     Column, // Движение по вертикали вдоль колонки
     SwapTop // Свап с пустой верхней ячейкой
 };
@@ -55,8 +58,8 @@ enum class MoveType
 struct Move
 {
     MoveType type;
-    uint8_t index = 0; // индекс в рамках типа движения, [0, 5)
-    int8_t direction = 0; // направление движения в рамках типа: -1 -> вниз/влево, +1 -> вверх/вправо, 0 - манипуляции с пустой ячейкой
+    uint8_t index = 0;
+    int8_t direction = 0;
 
     friend bool operator==(const Move&, const Move&) = default;
 };
@@ -83,58 +86,59 @@ inline std::ostream& operator<<(std::ostream& os, const Move& move)
     return os;
 }
 
-// Класс этой игрушки
 class BabylonTower
 {
-    public:
+public:
     explicit BabylonTower(const State& state): _state(state) {}
     const State& state() const { return _state; }
     bool isSolved() const { return _state == GOAL_STATE; }
 
-    // Все возможные ходы
-    std::vector<Move> moves() const
+    // Все возможные ходы. Возвращает количество ходов.
+    int moves(Move* out) const
     {
-        std::vector<Move> moves;
-        moves.reserve(21);
+        int n = 0;
 
-        for (auto r = 0; r < DISCS; ++r)
+        for (int r = 0; r < DISCS; ++r)
         {
             if (rowUniform(r)) continue;
-            moves.push_back({ MoveType::Row, static_cast<uint8_t>(r), +1 });
-            moves.push_back({ MoveType::Row, static_cast<uint8_t>(r), -1 });
+            out[n++] = { MoveType::Row, static_cast<uint8_t>(r), +1 };
+            out[n++] = { MoveType::Row, static_cast<uint8_t>(r), -1 };
         }
 
-        for (auto c = 0; c < POSITIONS; ++c)
+        for (int c = 0; c < POSITIONS; ++c)
         {
             if (colUniform(c)) continue;
-            moves.push_back({ MoveType::Column, static_cast<uint8_t>(c), -1 });
-            moves.push_back({ MoveType::Column, static_cast<uint8_t>(c), +1 });
+            out[n++] = { MoveType::Column, static_cast<uint8_t>(c), -1 };
+            out[n++] = { MoveType::Column, static_cast<uint8_t>(c), +1 };
         }
 
-        // Обмен верхней ячейки с верхним диском.
-        // Имеет смысл только если ровно одна из них пустая.
         const bool topEmpty = _state[TOP] == '.';
         const bool diskEmpty = _state[idx(0, TOP_COL)] == '.';
 
         if (topEmpty != diskEmpty)
-            moves.push_back({ MoveType::SwapTop, 0, 0});
+            out[n++] = { MoveType::SwapTop, 0, 0 };
 
-        return moves;
+        return n;
     }
 
     // Применение хода
-    BabylonTower applyMove(const Move& move) const
+    void applyMove(const Move& move)
     {
-        State next = _state;
-
         switch (move.type)
         {
-            case MoveType::Row: rotateRow(next, move.index, move.direction); break;
-            case MoveType::Column: rotateColumn(next, move.index, move.direction); break;
-            case MoveType::SwapTop: std::swap(next[TOP], next[idx(0, TOP_COL)]); break;
+            case MoveType::Row:     rotateRow(_state, move.index, move.direction); break;
+            case MoveType::Column:  rotateColumn(_state, move.index, move.direction); break;
+            case MoveType::SwapTop: std::swap(_state[TOP], _state[idx(0, TOP_COL)]); break;
         }
+    }
 
-        return BabylonTower(next);
+    // Откат хода
+    void undoMove(const Move& move)
+    {
+        Move inv = move;
+        if (move.type == MoveType::Row || move.type == MoveType::Column)
+            inv.direction = static_cast<int8_t>(-move.direction);
+        applyMove(inv);
     }
 
     friend std::ostream& operator<<(std::ostream& os, const BabylonTower& tower)
@@ -152,7 +156,6 @@ class BabylonTower
         os << '\n';
         os << "    +---+---+---+---+---+\n";
 
-        // Диски
         for (int r = 0; r < DISCS; ++r)
         {
             os << "    |";
@@ -174,11 +177,9 @@ class BabylonTower
         return os;
     }
 
-
-    private:
+private:
     State _state;
 
-    // Все ли шарики одинакового цвета в рамках текущей строки
     bool rowUniform(int row) const
     {
         const char first = _state[idx(row, 0)];
@@ -190,7 +191,6 @@ class BabylonTower
         return true;
     }
 
-    // Все ли шарики одинакового цвета в рамках текущего столбца
     bool colUniform(int col) const
     {
         const char first = _state[idx(0, col)];
@@ -220,7 +220,7 @@ class BabylonTower
         }
     }
 
-    // Вертикальный сдвиг колонки
+    // Вертикальный сдвиг колонки (исправлен выход за границы при direction < 0)
     static void rotateColumn(State& state, int column, int direction)
     {
         if (direction > 0)
@@ -233,15 +233,17 @@ class BabylonTower
         else
         {
             const char last = state[idx(DISCS - 1, column)];
-            for (int row = 0; row < DISCS - 1; ++row)
+            for (int row = DISCS - 1; row > 0; --row)
                 state[idx(row, column)] = state[idx(row - 1, column)];
-            state[idx(DISCS - 1, column)] = last;
+            state[idx(0, column)] = last;
         }
     }
 };
 
-bool dfsHelper(const BabylonTower& tower, int depth, int limit, std::unordered_set<State, StateHash>& pathVisited,
-    std::vector<Move>& path, const std::optional<Move>& previousMove);
-int dfs(const BabylonTower& start, std::vector<Move>& path, int limit);
-int ids(const BabylonTower& start, std::vector<Move>& solution, int maxDepth = 60);
-
+static bool dfsHelper(BabylonTower& tower, int depth, int limit,
+    std::unordered_map<State, int, StateHash>& best,
+    std::vector<Move>& path,
+    const std::optional<Move>& prev, int h);
+int dfs(BabylonTower& tower, std::vector<Move>& solution, int limit);
+int ids(BabylonTower& tower, std::vector<Move>& solution, int maxDepth);
+int astar(BabylonTower& start, std::vector<Move>& solution, int maxDepth);
