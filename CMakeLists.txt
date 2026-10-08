@@ -10,6 +10,7 @@ add_executable(lab_1
         lab_3/BabylonTower.h
         lab_3/BabylonTower.cpp
         lab_3/main.cpp
+        lab_4/NineMensMorris.h
 )
 
 add_executable(lab_1_bonus
@@ -30,4 +31,9 @@ add_executable(lab_3
         lab_3/BabylonTower.cpp
         lab_3/BabylonTower.h
         lab_3/main.cpp
+)
+
+add_executable(lab_4
+        lab_4/NineMensMorris.h
+        lab_4/main.cpp
 )
