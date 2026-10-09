@@ -168,7 +168,7 @@ class NineMensMorris
 public:
     static constexpr int PiecesPerPlayer = 9;
 
-    NineMensMorris();
+    NineMensMorris() { reset(); }
 
     // Состояние игры
     const GameState& getGameState() const
@@ -502,11 +502,7 @@ private:
             : Cell::Player1;
     }
 
-    void addCapturesMoves(
-        std::vector<Move>& moves,
-        const Move& baseMove,
-        Player player
-    )
+    void addCapturesMoves (std::vector<Move>& moves, const Move& baseMove, Player player) const
     {
         Player opponentForPlayer = opponent(player);
 

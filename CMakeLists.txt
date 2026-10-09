@@ -35,5 +35,6 @@ add_executable(lab_3
 
 add_executable(lab_4
         lab_4/NineMensMorris.h
+        lab_4/Minimax.h
         lab_4/main.cpp
 )
