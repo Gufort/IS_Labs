@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <limits.h>
 #include <limits>
+#include <random>
 #include <vector>
 
 class GameBot
@@ -18,7 +19,7 @@ public:
         if (moves.empty())
             return std::nullopt;
 
-        std::optional<Move> bestMove;
+        std::vector<Move> bestMoves;
         int bestScore = -INT_MAX;
         int alpha = -INT_MAX;
         int beta = INT_MAX;
@@ -35,13 +36,24 @@ public:
             if (score > bestScore)
             {
                 bestScore = score;
-                bestMove = move;
+                bestMoves.clear();
+                bestMoves.push_back(move);
+            }
+            else if (score == bestScore)
+            {
+                bestMoves.push_back(move);
             }
 
             alpha = std::max(alpha, score);
         }
 
-        return bestMove;
+        if (bestMoves.empty())
+            return std::nullopt;
+
+        static std::mt19937 rng{ std::random_device{}() };
+        std::uniform_int_distribution<size_t> dist(0, bestMoves.size() - 1);
+
+        return bestMoves[dist(rng)];
     }
 
 private:
@@ -90,6 +102,9 @@ private:
 
     int negamax(NineMensMorris& game, int depth, int alpha, int beta, int ply)
     {
+        if (game.isDraw())
+            return 0;
+
         if (game.isGameOver())
             return -WinScore + ply;
 
@@ -106,7 +121,7 @@ private:
                 continue;
 
             // Рекурсивно оцениваем ответ противника.
-            const int score = -negamax(game,depth - 1,-beta,-alpha,ply + 1);
+            const int score = -negamax(game, depth - 1, -beta, -alpha, ply + 1);
 
             // Отменяем ход, чтобы исследовать следующую ветвь из той же позиции
             game.undo();
@@ -305,9 +320,6 @@ private:
 
         if (pieces < 3)
             return false;
-
-        if (pieces == 3)
-            return true;
 
         // При четырёх и более фишках нужна соседняя фишка, которая может переместиться в целевую точку.
         for (int position = 0; position < GameBoard::Size; ++position)

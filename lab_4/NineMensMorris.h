@@ -4,9 +4,10 @@
 #include <array>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 // Структура игрока
-enum class Player: uint8_t
+enum class Player : uint8_t
 {
     Player0 = 0,
     Player1 = 1
@@ -18,7 +19,7 @@ constexpr Player opponent(Player player)
 }
 
 // Клетка доски
-enum class Cell: uint8_t
+enum class Cell : uint8_t
 {
     Empty, Player0, Player1
 };
@@ -27,7 +28,9 @@ enum class Cell: uint8_t
 struct Move {
     int from = -1; // откуда
     int to = -1; // куда
-    int capture = -1; // позиция вражеской пешки, если мы ее снимаем с доски
+    std::array<int, 2> captures = {-1, -1}; // позиция вражеской пешки, если мы ее снимаем с доски
+
+    bool hasCapture() const { return captures[0] != -1; }
 };
 
 class GameBoard
@@ -40,7 +43,7 @@ public:
     using Mill = std::array<Position, 3>; // под мельницей понимается три подряд стоящие фишки одного цвета
     using NeighbourList = std::array<Position, MaxNeighbours>;
 
-    static const std::array<Mill, 16>& getMills(){ return _mills; }
+    static const std::array<Mill, 16>& getMills() { return _mills; }
 
     static bool isValidPosition(const Position pos)
     {
@@ -154,14 +157,14 @@ private:
     }};
 };
 
-
 struct GameState
 {
     std::array<Cell, GameBoard::Size> board;
     Player currentPlayer;
     std::array<int, 2> piecesInHand; // Кол-во фишек у каждого из игроков
-};
 
+    std::array<std::array<bool, 16>, 2> millsUsed = {};
+};
 
 class NineMensMorris
 {
@@ -210,82 +213,99 @@ public:
         std::vector<Move> result;
         Player player = currentPlayer();
 
+        std::vector<Move> baseMoves;
+
         // Выставляем фишки
         if (piecesInHand(player) > 0)
         {
             for (int position = 0; position < GameBoard::Size; ++position)
             {
-                if (getGameState().board[position] != Cell::Empty)
+                if (_gameState.board[position] != Cell::Empty)
                     continue;
 
                 Move move;
                 move.from = -1;
                 move.to = position;
-                move.capture = -1;
-
-                // Проверяем, образует ли установка мельницу.
-                if (formsMill(move, player))
-                    addCapturesMoves(result, move, player);
-                else
-                    result.push_back(move);
+                baseMoves.push_back(move);
             }
-
-            return result;
         }
-
-        // Двигаем поставленные фишки
-        int pieces = piecesOnBoard(player);
-
-        if (pieces < 3)
-            return result;
-
-        for (int from = 0; from < GameBoard::Size; ++from)
+        else
         {
-            if (_gameState.board[from] != cellForPlayer(player))
-                continue;
+            // Двигаем поставленные фишки
+            int pieces = piecesOnBoard(player);
 
-            // В случае, если у игрока всего 3 шашки - он может прыгать в любую ячейку
-            if (pieces == 3)
+            if (pieces < 3)
+                return result;
+
+            Cell ownCell = cellForPlayer(player);
+
+            for (int from = 0; from < GameBoard::Size; ++from)
             {
-                for (int to = 0; to < GameBoard::Size; ++to)
+                if (_gameState.board[from] != ownCell)
+                    continue;
+
+                // Обычное движение - только на соседние клетки
+                const auto& neighbours = GameBoard::neighbours(from);
+
+                for (int to : neighbours)
                 {
+                    if (to == -1)
+                        continue;
+
                     if (_gameState.board[to] != Cell::Empty)
                         continue;
 
                     Move move;
                     move.from = from;
                     move.to = to;
-                    move.capture = -1;
-
-                    if (formsMill(move, player))
-                        addCapturesMoves(result, move, player);
-                    else
-                        result.push_back(move);
+                    baseMoves.push_back(move);
                 }
+            }
+        }
 
+        for (const Move& base : baseMoves)
+        {
+            auto formed = millsFormedBy(base, player);
+
+            int newMills = 0;
+            for (int idx : formed)
+                if (!_gameState.millsUsed[playerIndex(player)][idx])
+                    ++newMills;
+
+            if (newMills == 0)
+            {
+                result.push_back(base);
                 continue;
             }
 
-            // Обычное движение - только на соседние клетки
-            const auto& neighbours = GameBoard::neighbours(from);
+            int captureCount = std::min(newMills, 2);
+            auto candidates = captureCandidates(opponent(player));
 
-            for (int to : neighbours)
+            if (candidates.empty())
             {
-                if (to == -1)
-                    continue;
+                result.push_back(base);
+                continue;
+            }
 
-                if (_gameState.board[to] != Cell::Empty)
-                    continue;
-
-                Move move;
-                move.from = from;
-                move.to = to;
-                move.capture = -1;
-
-                if (formsMill(move, player))
-                    addCapturesMoves(result, move, player);
-                else
+            if (captureCount == 1 || candidates.size() == 1)
+            {
+                for (int c : candidates)
+                {
+                    Move move = base;
+                    move.captures[0] = c;
                     result.push_back(move);
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i + 1 < candidates.size(); ++i)
+                    for (size_t j = i + 1; j < candidates.size(); ++j)
+                    {
+                        Move move = base;
+                        move.captures[0] = candidates[i];
+                        move.captures[1] = candidates[j];
+                        result.push_back(move);
+                    }
             }
         }
 
@@ -294,13 +314,13 @@ public:
 
     bool isLegalMove(const Move& move) const
     {
-        const auto moves = legalMoves();
+        auto moves = legalMoves();
 
         for (const Move& legalMove : moves)
         {
             if (legalMove.from == move.from &&
                 legalMove.to == move.to &&
-                legalMove.capture == move.capture)
+                legalMove.captures == move.captures)
             {
                 return true;
             }
@@ -319,6 +339,10 @@ public:
         Player player = currentPlayer();
         Cell playerCell = cellForPlayer(player);
 
+        std::vector<int> formed;
+        if (move.hasCapture())
+            formed = millsFormedBy(move, player);
+
         // Установка новой фишки
         if (move.from == -1)
         {
@@ -333,11 +357,13 @@ public:
             _gameState.board[move.to] = playerCell;
         }
 
-        // Снятие шашки противника
-        if (move.capture != -1)
-        {
-            _gameState.board[move.capture] = Cell::Empty;
-        }
+        // Снятие шашек противника
+        for (int cap : move.captures)
+            if (cap != -1)
+                _gameState.board[cap] = Cell::Empty;
+
+        for (int idx : formed)
+            _gameState.millsUsed[playerIndex(player)][idx] = true;
 
         _gameState.currentPlayer = opponent(player);
 
@@ -347,39 +373,7 @@ public:
     // Мельницы
     bool formsMill(const Move& move, Player player) const
     {
-        Cell playerCell = cellForPlayer(player);
-
-        GameState tempState = _gameState;
-
-        if (move.from == -1)
-            tempState.board[move.to] = playerCell;
-        else
-        {
-            tempState.board[move.from] = Cell::Empty;
-            tempState.board[move.to] = playerCell;
-        }
-
-        for (const auto& mill : GameBoard::getMills())
-        {
-            if (!GameBoard::containsPosition(mill, move.to))
-                continue;
-
-            bool completed = true;
-
-            for (auto position : mill)
-            {
-                if (tempState.board[position] != playerCell)
-                {
-                    completed = false;
-                    break;
-                }
-            }
-
-            if (completed)
-                return true;
-        }
-
-        return false;
+        return !millsFormedBy(move, player).empty();
     }
 
     bool isInMill(GameBoard::Position position, Player player) const
@@ -418,7 +412,7 @@ public:
         // Сначала ищем шашки, которые НЕ находятся в мельнице
         for (int position = 0; position < GameBoard::Size; ++position)
         {
-            if (getGameState().board[position] != playerCell)
+            if (_gameState.board[position] != playerCell)
                 continue;
 
             if (!isInMill(position, player))
@@ -438,9 +432,34 @@ public:
         return candidates;
     }
 
+    int repetitionsInHistory() const
+    {
+        const GameState& cur = _gameState;
+        int count = 0;
+
+        for (const auto& [move, st] : _history)
+        {
+            if (st.board == cur.board &&
+                st.currentPlayer == cur.currentPlayer &&
+                st.piecesInHand == cur.piecesInHand &&
+                st.millsUsed == cur.millsUsed)
+                ++count;
+        }
+
+        return count;
+    }
+
+    bool isDraw() const
+    {
+        return repetitionsInHistory() >= 2;
+    }
+
     // Конец игры
     bool isGameOver() const
     {
+        if (isDraw())
+            return true;
+
         Player player = currentPlayer();
 
         if (piecesOnBoard(player) < 3 && piecesInHand(player) == 0)
@@ -455,6 +474,9 @@ public:
     std::optional<Player> winner() const
     {
         if (!isGameOver())
+            return std::nullopt;
+
+        if (isDraw())
             return std::nullopt;
 
         return opponent(currentPlayer());
@@ -486,6 +508,8 @@ public:
         _gameState.piecesInHand[0] = PiecesPerPlayer;
         _gameState.piecesInHand[1] = PiecesPerPlayer;
 
+        _gameState.millsUsed = {};
+
         _history.clear();
     }
 
@@ -502,17 +526,53 @@ private:
             : Cell::Player1;
     }
 
-    void addCapturesMoves (std::vector<Move>& moves, const Move& baseMove, Player player) const
+    std::vector<int> millsFormedBy(const Move& move, Player player) const
     {
-        Player opponentForPlayer = opponent(player);
+        std::vector<int> result;
 
-        for (auto capture : captureCandidates(opponentForPlayer))
+        if (!GameBoard::isValidPosition(move.to))
+            return result;
+
+        Cell playerCell = cellForPlayer(player);
+
+        GameState tempState = _gameState;
+
+        if (move.from == -1)
+            tempState.board[move.to] = playerCell;
+        else
         {
-            Move move = baseMove;
-            move.capture = capture;
+            if (!GameBoard::isValidPosition(move.from))
+                return result;
 
-            moves.push_back(move);
+            tempState.board[move.from] = Cell::Empty;
+            tempState.board[move.to] = playerCell;
         }
+
+        const auto& mills = GameBoard::getMills();
+
+        for (size_t i = 0; i < mills.size(); ++i)
+        {
+            const auto& mill = mills[i];
+
+            if (!GameBoard::containsPosition(mill, move.to))
+                continue;
+
+            bool completed = true;
+
+            for (auto position : mill)
+            {
+                if (tempState.board[position] != playerCell)
+                {
+                    completed = false;
+                    break;
+                }
+            }
+
+            if (completed)
+                result.push_back(static_cast<int>(i));
+        }
+
+        return result;
     }
 
 private:

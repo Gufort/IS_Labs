@@ -6,11 +6,17 @@
 #include <cctype>
 #include <iostream>
 #include <optional>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
 
 namespace {
+
+std::string playerName(Player player)
+{
+    return player == Player::Player0 ? "Player0" : "Player1";
+}
 
 void printBoard(const NineMensMorris& game)
 {
@@ -124,7 +130,7 @@ std::optional<Move> parseMove(
     while (iss >> value)
         nums.push_back(value);
 
-    if (!iss.eof() || nums.empty() || nums.size() > 3)
+    if (!iss.eof() || nums.empty() || nums.size() > 4)
         return std::nullopt;
 
     Move move{};
@@ -133,17 +139,21 @@ std::optional<Move> parseMove(
         // Выставление фишки.
         move.from = -1;
         move.to = nums[0];
-        move.capture = -1;
     } else if (nums.size() == 2) {
         // Перемещение фишки.
         move.from = nums[0];
         move.to = nums[1];
-        move.capture = -1;
-    } else {
+    } else if (nums.size() == 3) {
         // Перемещение или выставление со взятием.
         move.from = nums[0];
         move.to = nums[1];
-        move.capture = nums[2];
+        move.captures[0] = nums[2];
+    } else {
+        // Двойная мельница — снимаем две фишки.
+        move.from = nums[0];
+        move.to = nums[1];
+        move.captures[0] = nums[2];
+        move.captures[1] = nums[3];
     }
 
     if (!game.isLegalMove(move))
@@ -155,19 +165,25 @@ std::optional<Move> parseMove(
 // Вывод хода бота: строго одна строка в stderr.
 void printMove(const Move& move)
 {
-    if (move.from == -1 && move.capture == -1) {
+    if (move.from == -1 && !move.hasCapture()) {
         std::cerr << move.to << '\n';
     } else if (move.from == -1) {
         std::cerr << -1 << ' '
                   << move.to << ' '
-                  << move.capture << '\n';
-    } else if (move.capture == -1) {
+                  << move.captures[0];
+        if (move.captures[1] != -1)
+            std::cerr << ' ' << move.captures[1];
+        std::cerr << '\n';
+    } else if (!move.hasCapture()) {
         std::cerr << move.from << ' '
                   << move.to << '\n';
     } else {
         std::cerr << move.from << ' '
                   << move.to << ' '
-                  << move.capture << '\n';
+                  << move.captures[0];
+        if (move.captures[1] != -1)
+            std::cerr << ' ' << move.captures[1];
+        std::cerr << '\n';
     }
 
     std::cerr.flush();
@@ -177,31 +193,31 @@ void printMove(const Move& move)
 
 int main(int argc, char** argv)
 {
-    if (argc < 2) {
-        std::cout << "Usage: " << argv[0] << " <0|1>\n";
-        return 1;
-    }
-
     int color;
 
-    try {
-        std::size_t parsed = 0;
-        const std::string argument = argv[argc - 1];
+    if (argc < 2) {
+        static std::mt19937 rng{ std::random_device{}() };
+        color = static_cast<int>(rng() % 2);
+    } else {
+        try {
+            std::size_t parsed = 0;
+            const std::string argument = argv[argc - 1];
 
-        color = std::stoi(argument, &parsed);
+            color = std::stoi(argument, &parsed);
 
-        if (parsed != argument.size()) {
+            if (parsed != argument.size()) {
+                std::cout << "Color must be 0 or 1\n";
+                return 1;
+            }
+        } catch (...) {
             std::cout << "Color must be 0 or 1\n";
             return 1;
         }
-    } catch (...) {
-        std::cout << "Color must be 0 or 1\n";
-        return 1;
-    }
 
-    if (color != 0 && color != 1) {
-        std::cout << "Color must be 0 or 1\n";
-        return 1;
+        if (color != 0 && color != 1) {
+            std::cout << "Color must be 0 or 1\n";
+            return 1;
+        }
     }
 
     const Player myPlayer =
@@ -297,25 +313,35 @@ int main(int argc, char** argv)
                 continue;
             }
 
+            const Player mover = game.currentPlayer();
+
             if (!game.makeMove(*move)) {
                 std::cout << "Failed to apply move. Try again.\n";
                 continue;
             }
 
             if (move->from == -1) {
-                std::cout << "Opponent placed a piece at cell "
+                std::cout << playerName(mover)
+                          << " placed a piece at cell "
                           << move->to << '\n';
             } else {
-                std::cout << "Opponent moved from cell "
+                std::cout << playerName(mover)
+                          << " moved from cell "
                           << move->from << " to cell "
                           << move->to << '\n';
             }
 
-            if (move->capture != -1) {
-                std::cout << "Opponent captured piece at cell "
-                          << move->capture << '\n';
+            if (move->captures[0] != -1) {
+                std::cout << playerName(mover)
+                          << " captured piece at cell "
+                          << move->captures[0] << '\n';
+            }
+
+            if (move->captures[1] != -1) {
+                std::cout << playerName(mover)
+                          << " captured piece at cell "
+                          << move->captures[1] << '\n';
             }
         }
     }
 }
-
