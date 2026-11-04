@@ -1,0 +1,113 @@
+# Формат: id;описание;необязательный CF по умолчанию
+engine_wont_start;Двигатель не запускается
+engine_cranks_slowly;Стартер вращает двигатель медленно
+engine_cranks_normally;Стартер вращает двигатель нормально
+starter_clicks;При запуске слышны щелчки стартера
+starter_silent;Стартер не издаёт звуков
+headlights_dim;Фары светят тускло
+headlights_normal;Фары светят нормально
+terminals_corroded;Клеммы аккумулятора окислены
+jump_start_works;После прикуривания двигатель запускается
+battery_old;Аккумулятор старше пяти лет
+battery_voltage_low_measured;Измеренное напряжение аккумулятора ниже нормы
+alternator_lamp_on;Горит индикатор генератора
+voltage_drops_running;Напряжение падает при работающем двигателе
+belt_loose;Ремень генератора ослаблен
+belt_broken;Ремень генератора оборван
+fuel_level_low;Низкий уровень топлива
+fuel_pump_silent;Не слышно топливного насоса
+fuel_pressure_low;Низкое давление топлива
+fuel_smell;Ощущается запах топлива
+spark_absent;На свече нет искры
+spark_weak;Искра слабая
+plugs_wet;Свечи залиты топливом
+plugs_fouled;На свечах сильный нагар
+engine_stalls;Двигатель глохнет
+idle_rough;Нестабильный холостой ход
+misfire;Наблюдаются пропуски зажигания
+power_low;Снижена мощность двигателя
+fuel_consumption_high;Повышен расход топлива
+black_smoke;Чёрный дым из выхлопной трубы
+blue_smoke;Синий дым из выхлопной трубы
+white_smoke;Белый дым из выхлопной трубы
+engine_overheats;Двигатель перегревается
+coolant_low;Низкий уровень охлаждающей жидкости
+coolant_leak_visible;Видна утечка охлаждающей жидкости
+fan_not_running;Вентилятор радиатора не включается
+thermostat_stuck;Термостат заклинил
+radiator_cold;Радиатор остаётся холодным при перегреве
+oil_pressure_lamp;Горит лампа давления масла
+oil_level_low;Низкий уровень масла
+oil_leak_visible;Видна утечка масла
+engine_knock;Слышен стук двигателя
+brake_pedal_soft;Педаль тормоза мягкая
+brake_pedal_hard;Педаль тормоза слишком тугая
+brake_fluid_low;Низкий уровень тормозной жидкости
+car_pulls_braking;Автомобиль уводит при торможении
+brake_squeal;Тормоза скрипят
+steering_heavy;Рулевое управление тяжёлое
+power_steering_fluid_low;Низкий уровень жидкости усилителя руля
+steering_vibration;Вибрация на руле
+tire_pressure_uneven;Давление в шинах различается
+tire_wear_uneven;Неравномерный износ шин
+suspension_knock;Стук в подвеске
+car_bounces;Автомобиль раскачивается после неровности
+transmission_slips;Коробка передач пробуксовывает
+gear_shift_hard;Передачи переключаются с трудом
+transmission_fluid_low;Низкий уровень жидкости КПП
+check_engine_on;Горит Check Engine
+oxygen_sensor_code;Есть код ошибки датчика кислорода
+maf_sensor_code;Есть код ошибки ДМРВ
+coolant_sensor_code;Есть код датчика температуры ОЖ
+cabin_not_heating;Печка не греет салон
+ac_not_cooling;Кондиционер не охлаждает
+compressor_not_engaging;Компрессор кондиционера не включается
+refrigerant_low;Низкое давление хладагента
+window_fogs;Стёкла запотевают
+water_in_cabin;В салоне обнаружена вода
+starting_system_suspect;Подозрение на систему запуска
+battery_charge_low;Заряд аккумулятора недостаточен
+battery_connection_fault;Нарушен контакт аккумулятора
+battery_fault_confirmed;Неисправность аккумулятора подтверждена
+recommend_replace_battery;Рекомендуется заменить аккумулятор
+starter_circuit_fault;Неисправна цепь стартера
+starter_motor_fault;Неисправен стартер
+charging_system_fault;Неисправна система зарядки
+alternator_fault;Неисправен генератор
+fuel_delivery_suspect;Подозрение на подачу топлива
+fuel_pump_fault;Неисправен топливный насос
+fuel_filter_clogged;Засорён топливный фильтр
+ignition_suspect;Подозрение на систему зажигания
+ignition_coil_fault;Неисправна катушка зажигания
+spark_plug_fault;Неисправны свечи зажигания
+mixture_rich;Топливная смесь переобогащена
+mixture_lean;Топливная смесь обеднена
+air_intake_fault;Неисправна система впуска
+maf_fault;Неисправен датчик массового расхода воздуха
+oxygen_sensor_fault;Неисправен датчик кислорода
+cooling_system_fault;Неисправна система охлаждения
+coolant_leak;Подтверждена утечка охлаждающей жидкости
+thermostat_fault;Неисправен термостат
+cooling_fan_fault;Неисправен вентилятор охлаждения
+lubrication_fault;Неисправна система смазки
+engine_wear_suspect;Подозрение на износ двигателя
+brake_system_fault;Неисправна тормозная система
+brake_leak;Утечка в тормозной системе
+brake_pad_wear;Изношены тормозные колодки
+steering_system_fault;Неисправно рулевое управление
+wheel_alignment_fault;Нарушены углы установки колёс
+wheel_balance_fault;Нарушена балансировка колёс
+suspension_fault;Неисправна подвеска
+shock_absorber_fault;Неисправны амортизаторы
+transmission_fault;Неисправна трансмиссия
+transmission_leak;Утечка жидкости трансмиссии
+climate_system_fault;Неисправна климатическая система
+ac_leak;Утечка хладагента
+heater_fault;Неисправен отопитель
+electrical_fault;Общая электрическая неисправность
+urgent_service;Требуется срочное обслуживание
+safe_to_drive;Допускается осторожное движение до сервиса
+do_not_drive;Эксплуатация автомобиля запрещена
+cycle_seed;Исходный факт для демонстрации цикла
+cycle_a;Циклический диагностический факт A
+cycle_b;Циклический диагностический факт B
