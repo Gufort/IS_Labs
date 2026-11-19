@@ -1,0 +1,124 @@
+# Формат: id;посылка1,посылка2;заключение;объяснение;необязательный CF правила
+R001;engine_wont_start,starter_clicks;starting_system_suspect;Щелчки при неудачном запуске указывают на систему запуска;0.96
+R002;starting_system_suspect,headlights_dim;battery_charge_low;Тусклые фары подтверждают недостаточный заряд;0.95
+R003;battery_charge_low,terminals_corroded;battery_connection_fault;Окисление клемм создаёт плохой контакт;0.94
+R004;battery_connection_fault,jump_start_works;battery_fault_confirmed;Успешное прикуривание подтверждает проблему аккумулятора;0.96
+R005;battery_fault_confirmed,battery_old;recommend_replace_battery;Старый неисправный аккумулятор следует заменить;0.98
+R006;engine_cranks_slowly,headlights_dim;battery_charge_low;Медленная прокрутка и тусклый свет означают разряд;0.93
+R007;battery_voltage_low_measured,engine_wont_start;battery_charge_low;Низкое измеренное напряжение объясняет отказ запуска;0.99
+R008;battery_charge_low,jump_start_works;battery_fault_confirmed;Запуск от внешнего источника подтверждает слабый аккумулятор;0.92
+R009;battery_voltage_low_measured,battery_old;battery_fault_confirmed;Старый аккумулятор с низким напряжением неисправен;0.97
+R010;starter_silent,headlights_normal;starter_circuit_fault;При исправном освещении тишина стартера указывает на его цепь;0.88
+R011;starter_circuit_fault,engine_wont_start;starter_motor_fault;Неисправная цепь объясняет отказ стартера;0.85
+R012;starter_clicks,headlights_normal;starter_motor_fault;Щелчки при нормальном свете указывают на стартер;0.82
+R013;starter_motor_fault;urgent_service;Неисправность стартера требует обслуживания;0.88
+R014;alternator_lamp_on,voltage_drops_running;charging_system_fault;Лампа и падение напряжения указывают на зарядку;0.98
+R015;charging_system_fault,belt_loose;alternator_fault;Ослабленный ремень нарушает работу генератора;0.80
+R016;charging_system_fault,belt_broken;alternator_fault;Оборванный ремень исключает зарядку;0.99
+R017;alternator_fault,battery_charge_low;urgent_service;Отказ генератора разряжает аккумулятор;0.95
+R018;alternator_fault;electrical_fault;Генератор относится к электрической системе;0.97
+R019;electrical_fault,engine_wont_start;starting_system_suspect;Электрическая проблема может блокировать запуск;0.75
+R020;charging_system_fault,engine_stalls;do_not_drive;Остановка двигателя при отказе зарядки опасна;0.90
+R021;engine_cranks_normally,engine_wont_start;fuel_delivery_suspect;Нормальная прокрутка смещает поиск к топливу;0.72
+R022;fuel_level_low,engine_wont_start;fuel_delivery_suspect;При пустом баке вероятна нехватка топлива;0.98
+R023;fuel_pump_silent,fuel_delivery_suspect;fuel_pump_fault;Тишина насоса подтверждает его отказ;0.95
+R024;fuel_pressure_low,fuel_pump_silent;fuel_pump_fault;Низкое давление и тишина насоса подтверждают отказ;0.98
+R025;fuel_pressure_low,fuel_pump_silent;fuel_filter_clogged;Низкое давление также допускает засор фильтра;0.55
+R026;fuel_pressure_low,engine_stalls;fuel_filter_clogged;Падение давления и остановки указывают на фильтр;0.82
+R027;fuel_pump_fault;urgent_service;Топливный насос требует ремонта;0.90
+R028;fuel_filter_clogged,power_low;urgent_service;Засор фильтра снижает мощность и требует замены;0.84
+R029;fuel_smell,engine_wont_start;mixture_rich;Запах топлива при отказе запуска означает перелив;0.84
+R030;plugs_wet,fuel_smell;mixture_rich;Мокрые свечи подтверждают богатую смесь;0.94
+R031;black_smoke,fuel_consumption_high;mixture_rich;Чёрный дым и расход характерны для богатой смеси;0.97
+R032;mixture_rich,plugs_fouled;spark_plug_fault;Богатая смесь загрязняет свечи;0.90
+R033;power_low,fuel_consumption_high;air_intake_fault;Потеря мощности и расход указывают на впуск;0.76
+R034;maf_sensor_code,air_intake_fault;maf_fault;Код ДМРВ подтверждает его неисправность;0.98
+R035;maf_fault,black_smoke;mixture_rich;Ошибочный расход воздуха обогащает смесь;0.88
+R036;oxygen_sensor_code,check_engine_on;oxygen_sensor_fault;Код кислородного датчика подтверждает отказ;0.99
+R037;oxygen_sensor_fault,fuel_consumption_high;mixture_rich;Неисправный датчик повышает расход;0.86
+R038;oxygen_sensor_fault,idle_rough;mixture_lean;Неисправный датчик может обеднять смесь;0.68
+R039;mixture_lean,power_low;urgent_service;Бедная смесь требует диагностики;0.78
+R040;mixture_rich,black_smoke;urgent_service;Богатая смесь с дымом требует диагностики;0.88
+R041;spark_absent,engine_wont_start;ignition_suspect;Нет искры — проверяется зажигание;0.99
+R042;spark_weak,misfire;ignition_suspect;Слабая искра вызывает пропуски;0.94
+R043;ignition_suspect,spark_absent;ignition_coil_fault;Отсутствие искры указывает на катушку;0.84
+R044;ignition_suspect,plugs_fouled;spark_plug_fault;Нагар подтверждает неисправность свечей;0.96
+R045;plugs_wet,spark_absent;spark_plug_fault;Залитые свечи не дают искру;0.86
+R046;spark_plug_fault,misfire;power_low;Неисправные свечи снижают мощность;0.89
+R047;ignition_coil_fault,misfire;engine_stalls;Отказ катушки способен остановить двигатель;0.90
+R048;ignition_coil_fault;urgent_service;Катушку зажигания следует заменить;0.88
+R049;spark_plug_fault;urgent_service;Свечи требуют обслуживания;0.72
+R050;misfire,check_engine_on;ignition_suspect;Пропуски с индикацией требуют проверки зажигания;0.85
+R051;idle_rough,misfire;spark_plug_fault;Неровный ход с пропусками часто связан со свечами;0.70
+R052;engine_stalls,idle_rough;air_intake_fault;Подсос воздуха вызывает нестабильность и остановку;0.74
+R053;air_intake_fault,maf_sensor_code;maf_fault;Код подтверждает проблему измерения воздуха;0.97
+R054;maf_fault;urgent_service;ДМРВ требует проверки или замены;0.80
+R055;misfire,power_low;urgent_service;Пропуски под нагрузкой требуют обслуживания;0.83
+R056;engine_overheats,coolant_low;cooling_system_fault;Перегрев и низкий уровень указывают на охлаждение;0.98
+R057;coolant_leak_visible,coolant_low;coolant_leak;Видимая утечка подтверждается падением уровня;0.99
+R058;coolant_leak,cooling_system_fault;do_not_drive;При утечке и перегреве движение запрещено;0.99
+R059;engine_overheats,fan_not_running;cooling_fan_fault;Неработающий вентилятор вызывает перегрев;0.96
+R060;cooling_fan_fault;cooling_system_fault;Вентилятор является частью системы охлаждения;0.98
+R061;engine_overheats,radiator_cold;thermostat_fault;Холодный радиатор при перегреве указывает на термостат;0.97
+R062;thermostat_stuck;thermostat_fault;Заклинивание означает отказ термостата;0.99
+R063;thermostat_fault;cooling_system_fault;Термостат относится к системе охлаждения;0.98
+R064;coolant_sensor_code,engine_overheats;cooling_system_fault;Ошибка датчика сопровождает проблему охлаждения;0.83
+R065;cooling_system_fault,engine_overheats;do_not_drive;Перегретый двигатель эксплуатировать нельзя;0.99
+R066;coolant_low,cabin_not_heating;heater_fault;Недостаток антифриза нарушает работу печки;0.90
+R067;heater_fault;climate_system_fault;Печка относится к климатической системе;0.97
+R068;white_smoke,coolant_low;engine_wear_suspect;Белый дым с потерей антифриза подозрителен для двигателя;0.92
+R069;engine_wear_suspect,engine_overheats;do_not_drive;Возможное повреждение двигателя опасно;0.96
+R070;coolant_leak;urgent_service;Утечку охлаждения нужно устранить срочно;0.94
+R071;oil_pressure_lamp,oil_level_low;lubrication_fault;Лампа и низкий уровень означают нарушение смазки;0.99
+R072;oil_leak_visible,oil_level_low;lubrication_fault;Утечка объясняет падение уровня масла;0.98
+R073;lubrication_fault,engine_knock;do_not_drive;Стук без смазки грозит разрушением двигателя;1.00
+R074;blue_smoke,oil_level_low;engine_wear_suspect;Сгорание масла указывает на износ;0.96
+R075;engine_wear_suspect,engine_knock;urgent_service;Износ со стуком требует срочной диагностики;0.97
+R076;oil_pressure_lamp;do_not_drive;При отсутствии давления масла движение запрещено;0.98
+R077;oil_leak_visible;urgent_service;Утечку масла необходимо устранить;0.85
+R078;blue_smoke;engine_wear_suspect;Синий дым характерен для расхода масла;0.88
+R079;engine_knock,oil_level_low;lubrication_fault;Низкий уровень может вызвать стук;0.93
+R080;lubrication_fault;urgent_service;Система смазки требует немедленного обслуживания;0.96
+R081;brake_pedal_soft,brake_fluid_low;brake_leak;Мягкая педаль и низкий уровень означают утечку;0.98
+R082;brake_leak;brake_system_fault;Утечка делает тормозную систему неисправной;0.99
+R083;brake_system_fault,brake_pedal_soft;do_not_drive;Мягкая педаль при неисправности опасна;1.00
+R084;brake_squeal;brake_pad_wear;Скрип часто означает износ колодок;0.78
+R085;brake_pad_wear,car_pulls_braking;brake_system_fault;Неравномерный износ вызывает увод;0.91
+R086;brake_pedal_hard;brake_system_fault;Тугая педаль указывает на усилитель тормозов;0.84
+R087;brake_fluid_low;brake_system_fault;Недостаток жидкости опасен для тормозов;0.92
+R088;car_pulls_braking,tire_pressure_uneven;wheel_alignment_fault;Разное давление может создавать увод;0.62
+R089;brake_pad_wear;urgent_service;Колодки следует проверить и заменить;0.88
+R090;brake_system_fault;urgent_service;Тормозная система требует срочного ремонта;0.99
+R091;steering_heavy,power_steering_fluid_low;steering_system_fault;Низкий уровень усилителя утяжеляет руль;0.96
+R092;steering_vibration,tire_pressure_uneven;wheel_balance_fault;Разное давление вызывает вибрацию;0.72
+R093;steering_vibration,tire_wear_uneven;wheel_alignment_fault;Вибрация и износ указывают на геометрию;0.87
+R094;tire_wear_uneven;wheel_alignment_fault;Неравномерный износ характерен для неверных углов;0.82
+R095;wheel_alignment_fault;steering_system_fault;Геометрия колёс влияет на рулевое управление;0.76
+R096;steering_system_fault,steering_heavy;urgent_service;Тяжёлый руль требует обслуживания;0.88
+R097;suspension_knock;suspension_fault;Стук указывает на люфт подвески;0.88
+R098;car_bounces,suspension_knock;shock_absorber_fault;Раскачка со стуком указывает на амортизаторы;0.94
+R099;shock_absorber_fault;suspension_fault;Амортизаторы входят в подвеску;0.99
+R100;suspension_fault,tire_wear_uneven;wheel_alignment_fault;Неисправность подвески нарушает углы;0.81
+R101;wheel_balance_fault;safe_to_drive;До сервиса допустимо осторожное движение;0.65
+R102;wheel_alignment_fault;urgent_service;Требуется регулировка углов колёс;0.78
+R103;suspension_fault;urgent_service;Подвеску следует диагностировать;0.83
+R104;power_steering_fluid_low;urgent_service;Необходимо найти утечку жидкости усилителя;0.82
+R105;tire_pressure_uneven;safe_to_drive;После коррекции давления движение допустимо;0.74
+R106;transmission_slips,transmission_fluid_low;transmission_leak;Низкий уровень сопровождает утечку трансмиссии;0.88
+R107;transmission_leak;transmission_fault;Утечка нарушает работу трансмиссии;0.97
+R108;gear_shift_hard,transmission_fluid_low;transmission_fault;Недостаток жидкости затрудняет переключение;0.94
+R109;transmission_slips;transmission_fault;Пробуксовка является признаком неисправности КПП;0.92
+R110;transmission_fault,transmission_slips;do_not_drive;Пробуксовка неисправной КПП может усилить повреждение;0.86
+R111;transmission_fault;urgent_service;Трансмиссия требует диагностики;0.91
+R112;transmission_leak;urgent_service;Утечку трансмиссионной жидкости нужно устранить;0.89
+R113;ac_not_cooling,compressor_not_engaging;climate_system_fault;Неработающий компрессор объясняет отсутствие холода;0.92
+R114;ac_not_cooling,refrigerant_low;ac_leak;Низкое давление указывает на утечку хладагента;0.95
+R115;ac_leak;climate_system_fault;Утечка нарушает работу кондиционера;0.98
+R116;climate_system_fault;safe_to_drive;Климатическая неисправность обычно не мешает движению;0.90
+R117;cabin_not_heating,coolant_low;cooling_system_fault;Отсутствие тепла может быть признаком нехватки антифриза;0.78
+R118;window_fogs,water_in_cabin;climate_system_fault;Влага в салоне вызывает запотевание;0.85
+R119;water_in_cabin;urgent_service;Необходимо найти источник воды в салоне;0.68
+R120;compressor_not_engaging,refrigerant_low;ac_leak;Защита компрессора срабатывает при утечке;0.86
+R121;cycle_seed;cycle_a;Начальный факт позволяет получить A;1.00
+R122;cycle_a;cycle_b;Из A получается B;0.90
+R123;cycle_b;cycle_a;Из B снова следует A — цикл;0.90

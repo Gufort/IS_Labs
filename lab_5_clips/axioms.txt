@@ -1,0 +1,18 @@
+# Формат: id;необязательный коэффициент уверенности
+engine_wont_start;0.98
+starter_clicks;0.96
+headlights_dim;0.93
+terminals_corroded;0.91
+jump_start_works;0.97
+battery_old;0.95
+engine_overheats;0.96
+coolant_low;0.94
+coolant_leak_visible;0.95
+brake_pedal_soft;0.94
+brake_fluid_low;0.93
+spark_absent;0.97
+misfire;0.90
+check_engine_on;0.93
+oil_pressure_lamp;0.97
+oil_level_low;0.94
+engine_knock;0.92
