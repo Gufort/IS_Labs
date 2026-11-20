@@ -194,5 +194,8 @@
         then (format t "Conclusion: %s is confirmed with CF %.4f%n"
                      ?target ?cf)
         else (format t "Conclusion: %s is not confirmed%n" ?target))
-        
+    (format t "%nAxioms:%n")
+    (do-for-all-facts ((?f known-fact))
+        (eq ?f:origin axiom)
+        (format t "%s;%.2f%n" ?f:id ?f:cf))
 )
